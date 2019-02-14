@@ -1,0 +1,16 @@
+{
+    "name" : "tetris-ascii",
+    "starting_widget": "test-tetris",
+    "init-scripts" : [
+        ["tcc", "initTetris"]
+    ],
+    "pre-load" : [
+        {
+            "file" : "tetris.c",
+            "type" : "tcc"
+        }
+    ],
+    "test-tetris": {
+	"<type>": "tetris-ascii"
+    }
+}
