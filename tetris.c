@@ -7,7 +7,7 @@
 #include <yirl/text-screen.h>
 #include <yirl/entity-script.h>
 
-const static int NB_PIECES = 3;
+const static int NB_PIECES = 4;
 static int otl;
 const static int TETRIS_W = 16;
 
@@ -115,16 +115,12 @@ void *tetris_action(int nbArgs, void **args)
 	} else if (yevCheckKeys(events, YKEY_DOWN, Y_UP_KEY, 'w')) {
 		if (yeGetInt(cp) == TETRIS_LINE) {
 			++l_swap_mode;
-			if (l_swap_mode & 1) {
-				yeSetAt(piece, 0, 0xf);
-				yePopBack(piece);
-				yePopBack(piece);
-				yePopBack(piece);
-			} else {
-				yeSetAt(piece, 0, 1);
-				yeCreateInt(1, piece, NULL);
-				yeCreateInt(1, piece, NULL);
-				yeCreateInt(1, piece, NULL);
+			YEntityBlock {
+				if (l_swap_mode & 1) {
+					piece = [0xf];
+				} else {
+					piece = [1, 1, 1, 1];
+				}
 			}
 		} else if (yeGetInt(cp) == TETRIS_THING1) {
 			++t1_swap_mode;
@@ -151,22 +147,16 @@ void *tetris_action(int nbArgs, void **args)
 
 			++t0_swap_mode;
 			t0_t = t0_swap_mode & 3;
-			if (t0_t == 1) {
-				yeSetAt(piece, 0, 1);
-				yeSetAt(piece, 1, 3);
-				yeCreateInt(1, piece, NULL);
-			} else if (t0_t == 2) {
-				yeSetAt(piece, 1, 2);
-				yeSetAt(piece, 0, 7);
-				yePopBack(piece);
-			} else if (t0_t == 3) {
-				yeSetAt(piece, 0, 4);
-				yeSetAt(piece, 1, 6);
-				yeCreateInt(4, piece, NULL);
-			} else {
-				yeSetAt(piece, 1, 7);
-				yeSetAt(piece, 0, 2);
-				yePopBack(piece);
+			YEntityBlock {
+				if (t0_t == 1) {
+					piece = [1, 3, 1];
+				} else if (t0_t == 2) {
+					piece = [7, 2];
+				} else if (t0_t == 3) {
+					piece = [4, 6, 4];
+				} else {
+					piece = [2, 7];
+				}
 			}
 		}
 	}
@@ -251,14 +241,14 @@ void *tetris_init(int nbArgs, void **args)
 		2-20 :  "|................|",
 		21 :    "|________________|"
 		};
-		tetris.masks = { 0-18: 0, 19: 0xffffff };
+		tetris.masks = { 0-18: 0, 18: 0xffffff };
 		tetris.text_l = 16;
 		tetris["text-align"] = "center";
 		tetris["turn-length"] = 300000;
 		tetris.pieces = [
 			[0x1, 0x1, 0x1, 0x1],
 			[0x3, 0x3],
-			[0x2, 0x7],
+			[2, 7],
 			[3, 1, 1]
 			];
 		tetris.cp = 10;
@@ -273,7 +263,7 @@ void *tetris_init(int nbArgs, void **args)
 	l_swap_mode = 0;
 	t0_swap_mode = 0;
 	t1_swap_mode = 0;
-	gen_piece(tetris, yeGet(tetris, "cp"), yeGet(tetris, "piece"), 3);
+	gen_piece(tetris, yeGet(tetris, "cp"), yeGet(tetris, "piece"), 2);
 	printf("txt: %p - %p - %d\nta: %s - %d 0x%x\n", tetris, yeGet(tetris, "text"),
 	       yeGetIntAt(tetris, "score"),
 	       yeGetStringAt(tetris, "text-align"),
