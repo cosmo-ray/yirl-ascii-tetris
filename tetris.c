@@ -46,12 +46,8 @@ static int merge_mask(Entity *masks, Entity *piece, int p, int px)
 	for (int i = 0; i < yeLen(piece); ++i) {
 		Entity *m = yeGet(masks, p - i);
 		if (p - i < 0) {
-			// lose
-			printf("LOSE %d %d !\n", p, i);
 			return 1;
 		}
-		printf("%x - %x - %x\n", yeGetInt(m), yeGetIntAt(piece, i),
-		       yeGetInt(m) | yeGetIntAt(piece, i));
 		yeSetInt(m, yeGetInt(m) | (yeGetIntAt(piece, i) << px));
 	}
 	return 0;
@@ -169,9 +165,6 @@ void *tetris_action(int nbArgs, void **args)
 	yeAddInt(ppy, 1);
 	yeAddInt(ygGet("tetris-ascii.score"), 1);
 	ywTextScreenReformat();
-	printf("%d - %d %x | %d %d OTL: %d\n", yeGetInt(ppy), yeGetInt(cp),
-	       yeGetIntAt(piece, 0), yeGetIntAt(tetris, "w"),
-	       yeGetInt(ppx), ywTurnLengthOverwrite);
 
 	int py = yeGetInt(ppy);
 	int px = yeGetInt(ppx);
@@ -183,8 +176,6 @@ void *tetris_action(int nbArgs, void **args)
 		int m = yeGetIntAt(masks, i);
 
 		if (piece_on_y && m & p_mask << px) {
-			printf("COL !!!! %d %d %d\n", i, i - py,
-				i + (i - py) - 1);
 			if (merge_mask(masks, piece, i + (py - i) - 1, px)) {
 				if (yeGet(tetris, "quit"))
 					yesCall(yeGet(tetris, "die"), tetris);
@@ -204,9 +195,6 @@ void *tetris_action(int nbArgs, void **args)
 		int piece_on_y = py >= i && py < i + yeLen(piece);
 		int p_mask = yeGetIntAt(piece, py - i);
 		int m = yeGetIntAt(masks, i);
-
-		if (piece_on_y)
-			printf("piece_on_y p: %d\n", py - i);
 
 		for (int j = 0; j < TETRIS_W; ++j) {
 			if (piece_on_y && p_mask << px & 1 << j) {
@@ -270,14 +258,8 @@ void *tetris_init(int nbArgs, void **args)
 	t0_swap_mode = 0;
 	t1_swap_mode = 0;
 	gen_piece(tetris, yeGet(tetris, "cp"), yeGet(tetris, "piece"), 2);
-	printf("txt: %p - %p - %d\nta: %s - %d 0x%x\n", tetris, yeGet(tetris, "text"),
-	       yeGetIntAt(tetris, "score"),
-	       yeGetStringAt(tetris, "text-align"),
-	       yeLen(yeGet(tetris, "pieces")),
-	       yeGetIntAt(yeGet(yeGet(tetris, "pieces"), 0), 0));
-
 	otl = ywTurnLengthOverwrite;
+	ywTurnLengthOverwrite = yeGetIntAt(tetris, "turn-length");
 	void *ret = ywidNewWidget(tetris, "text-screen");
-	printf("%d\n", tetris->refCount);
 	return ret;
 }
