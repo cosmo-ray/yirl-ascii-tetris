@@ -80,6 +80,11 @@ static void gen_piece(Entity *tetris, Entity *cp, Entity *piece, int p)
 }
 
 
+void *reset_otl(int nbArgs, void **args)
+{
+	ywTurnLengthOverwrite = otl;
+}
+
 void *tetris_action(int nbArgs, void **args)
 {
 	Entity *tetris = args[0];
@@ -164,9 +169,9 @@ void *tetris_action(int nbArgs, void **args)
 	yeAddInt(ppy, 1);
 	yeAddInt(ygGet("tetris-ascii.score"), 1);
 	ywTextScreenReformat();
-	printf("%d - %d %x | %d %d\n", yeGetInt(ppy), yeGetInt(cp),
+	printf("%d - %d %x | %d %d OTL: %d\n", yeGetInt(ppy), yeGetInt(cp),
 	       yeGetIntAt(piece, 0), yeGetIntAt(tetris, "w"),
-	       yeGetInt(ppx));
+	       yeGetInt(ppx), ywTurnLengthOverwrite);
 
 	int py = yeGetInt(ppy);
 	int px = yeGetInt(ppx);
@@ -258,6 +263,7 @@ void *tetris_init(int nbArgs, void **args)
 		tetris.background = "rgba: 255 255 255 255";
 		tetris.fmt = "yirl";
 		tetris.action = tetris_action;
+		tetris.destroy = reset_otl;
 	}
 	yuiRandInit();
 	l_swap_mode = 0;
