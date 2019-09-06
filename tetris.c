@@ -78,7 +78,7 @@ static void gen_piece(Entity *tetris, Entity *cp, Entity *piece, int p)
 
 void *reset_otl(int nbArgs, void **args)
 {
-	ywTurnLengthOverwrite = otl;
+	ywSetTurnLengthOverwrite(otl);
 }
 
 void *tetris_action(int nbArgs, void **args)
@@ -101,10 +101,10 @@ void *tetris_action(int nbArgs, void **args)
 	}
 
 	if (yevCheckKeys(events, YKEY_DOWN, Y_DOWN_KEY, 's')) {
-		ywTurnLengthOverwrite = yeGetIntAt(tetris, "turn-length") / 2;
+		ywSetTurnLengthOverwrite(yeGetIntAt(tetris, "turn-length") / 2);
 	}
 	if (yevCheckKeys(events, YKEY_UP, Y_DOWN_KEY, 's')) {
-		ywTurnLengthOverwrite = yeGetIntAt(tetris, "turn-length");
+		ywSetTurnLengthOverwrite(yeGetIntAt(tetris, "turn-length"));
 	}
 
 	if (yevCheckKeys(events, YKEY_DOWN, Y_LEFT_KEY, 'a')) {
@@ -258,8 +258,8 @@ void *tetris_init(int nbArgs, void **args)
 	t0_swap_mode = 0;
 	t1_swap_mode = 0;
 	gen_piece(tetris, yeGet(tetris, "cp"), yeGet(tetris, "piece"), 2);
-	otl = ywTurnLengthOverwrite;
-	ywTurnLengthOverwrite = yeGetIntAt(tetris, "turn-length");
+	otl = ywGetTurnLengthOverwrite();
+	ywSetTurnLengthOverwrite(yeGetIntAt(tetris, "turn-length"));
 	void *ret = ywidNewWidget(tetris, "text-screen");
 	return ret;
 }
