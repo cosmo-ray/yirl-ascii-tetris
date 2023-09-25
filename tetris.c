@@ -41,11 +41,11 @@ void *initTetris(int nbArgs, void **args)
 	return NULL;
 }
 
-static int merge_mask(Entity *masks, Entity *piece, int p, int px)
+static int merge_mask(Entity *masks, Entity *piece, int py, int px)
 {
 	for (int i = 0; i < yeLen(piece); ++i) {
-		Entity *m = yeGet(masks, p - i);
-		if (p - i < 0) {
+		Entity *m = yeGet(masks, py - i);
+		if (py - i < 0) {
 			return 1;
 		}
 		yeSetInt(m, yeGetInt(m) | (yeGetIntAt(piece, i) << px));
@@ -79,6 +79,7 @@ static void gen_piece(Entity *tetris, Entity *cp, Entity *piece, int p)
 void *reset_otl(int nbArgs, void **args)
 {
 	ywSetTurnLengthOverwrite(otl);
+	return NULL;
 }
 
 void *tetris_action(int nbArgs, void **args)
@@ -90,7 +91,7 @@ void *tetris_action(int nbArgs, void **args)
 	Entity *cp = yeGet(tetris, "cp");
 	Entity *piece = yeGet(yeGet(tetris, "pieces"), yeGetInt(cp));
 	Entity *masks = yeGet(tetris, "masks");
-	int ret = ACTION;
+	intptr_t ret = ACTION;
 
 	if (yevIsKeyDown(events, Y_ESC_KEY)) {
 		if (yeGet(tetris, "quit"))
@@ -166,19 +167,23 @@ void *tetris_action(int nbArgs, void **args)
 	yeAddInt(ygGet("tetris-ascii.score"), 1);
 	ywTextScreenReformat();
 
+	// py seems to be the bottom of the piece
 	int py = yeGetInt(ppy);
 	int px = yeGetInt(ppx);
 	int need_gen = 0;
+	int piece_l = yeLen(piece);
 
-	for (int i = py; i > 0 && i > py - yeLen(piece); --i) {
-		int piece_on_y = py >= i && py < i + yeLen(piece);
-		int p_mask = yeGetIntAt(piece, py - i);
-		int m = yeGetIntAt(masks, i);
+	for (int i = 0; i < piece_l && py - i >= 0; ++i) {
+		int mask_pos = py - i;
+		int p_mask = yeGetIntAt(piece, piece_l - 1 - i);
+		int m = yeGetIntAt(masks, mask_pos);
 
-		if (piece_on_y && m & p_mask << px) {
-			if (merge_mask(masks, piece, i + (py - i) - 1, px)) {
-				if (yeGet(tetris, "quit"))
+		if (m & p_mask << px) {
+			if (merge_mask(masks, piece, py - 1, px)) {
+				if (yeGet(tetris, "die"))
 					yesCall(yeGet(tetris, "die"), tetris);
+				else if (yeGet(tetris, "quit"))
+					yesCall(yeGet(tetris, "quit"), tetris);
 				else
 					ygTerminate();
 				return (void *)ret;
@@ -191,9 +196,13 @@ void *tetris_action(int nbArgs, void **args)
 	int txt_treshold = 2;
 
 	for (int i = 0; i < yeLen(masks) - 1; ++i) {
-		Entity *txt = yeGet(yeGet(tetris, "text"), i + txt_treshold);
+		Entity *all_txts = yeGet(tetris, "text");
+		Entity *txt = yeGet(all_txts, i + txt_treshold);
 		int piece_on_y = py >= i && py < i + yeLen(piece);
-		int p_mask = yeGetIntAt(piece, py - i);
+		/* printf("tetris_action: 304-l %d/%d\n", i, yeLen(masks) - 1); */
+		/* yePrint(piece); */
+		/* printf("yeGet at %d - %d: %d\n", py, i, py - i); */
+		int p_mask = py - i < 0 ? 0 : yeGetIntAt(piece, py - i);
 		int m = yeGetIntAt(masks, i);
 
 		for (int j = 0; j < TETRIS_W; ++j) {
@@ -206,7 +215,6 @@ void *tetris_action(int nbArgs, void **args)
 			}
 		}
 	}
-
 	for (int i = 0; i < yeLen(masks) - 1; ++i) {
 		int m = yeGetIntAt(masks, i);
 		if (!(LINE_MASK ^ m)) {
@@ -257,7 +265,8 @@ void *tetris_init(int nbArgs, void **args)
 	l_swap_mode = 0;
 	t0_swap_mode = 0;
 	t1_swap_mode = 0;
-	gen_piece(tetris, yeGet(tetris, "cp"), yeGet(tetris, "piece"), 2);
+	gen_piece(tetris, yeGet(tetris, "cp"),
+		  yeGet(tetris, "piece"), 2);
 	otl = ywGetTurnLengthOverwrite();
 	ywSetTurnLengthOverwrite(yeGetIntAt(tetris, "turn-length"));
 	void *ret = ywidNewWidget(tetris, "text-screen");
